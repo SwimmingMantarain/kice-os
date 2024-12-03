@@ -4,3 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+multiboot2 = "0.23.1"
+
+[profile.dev]
+# accelerates code startup by noticable amount
+opt-level = 1
