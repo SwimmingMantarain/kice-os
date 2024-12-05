@@ -1,15 +1,13 @@
-# The ability of Rust to include global assembly is poorly documented.
-# It uses GAS (GNU Assembly) syntax
-
-# is already the default
-# . intel_syntax noprefix
-
 .code64
 # entry point into Rust
 .EXTERN entry_rust
 
 # start symbol must be globally available (linker must find it, don't discard it)
 .GLOBAL start
+
+# Make the _heap_start and _heap_end symbols available to rust
+.GLOBAL _heap_start
+.GLOBAL _heap_end
 
 .section .text
 
@@ -63,3 +61,8 @@
         # https://ftp.gnu.org/old-gnu/Manuals/gas-2.9.1/html_chapter/as_7.html#SEC91
         .FILL 0x20000
     _initial_stack_top:
+
+    .ALIGN 16
+    _heap_start:
+        .FILL 0x40000
+    _heap_end:
