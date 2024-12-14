@@ -2,3 +2,4 @@
 *.iso
 *.bin
 *.elf
+*.o
