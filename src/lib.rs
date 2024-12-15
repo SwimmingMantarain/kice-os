@@ -14,6 +14,6 @@ pub extern fn kmain() -> ! {
 
 
 #[panic_handler]
-fn panic<'a, 'b>(_panic_info: &'a PanicInfo<'b>) -> ! {
+fn panic(_info: &PanicInfo) -> ! {
     loop {}
 }
