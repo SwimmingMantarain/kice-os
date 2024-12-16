@@ -1,122 +1,49 @@
+// Imports
+
+use core::ptr;
+
 // Constants
-const VGA_BUFFER_ADDR: usize = 0xb8000;
-const BUFFER_HEIGHT: usize = 25;
-const BUFFER_WIDTH: usize = 80;
 
-#[repr(transparent)]
-struct Buffer([
-    [Volatile<u16>; BUFFER_WIDTH]; BUFFER_HEIGHT
-]);
+const BUF_WIDTH: usize = 80;
+const BUF_HEIGHT: usize = 25;
+const VGA_BUFFER: *mut u8 = 0xb8000 as *mut u8;
 
-pub struct VGA {
-    buffer: &'static mut Buffer,
-    current_row: usize,
-    current_col: usize,
-    color_code: u8,
-}
-
-impl VGA {
-    pub fn new(foreground: Color, background: Color) -> Self {
-        let color_code = (background as u8) << 4 | (foreground as u8);
-        Self {
-            buffer: unsafe { &mut *(VGA_BUFFER_ADDR as *mut &mut Buffer) },
-            current_row: 0,
-            current_col: 0,
-            color_code,
-        }
-    }
-
-    pub fn clear_screen(&mut self) {
-        for row in 0..BUFFER_HEIGHT {
-            for col in 0..BUFFER_WIDTH {
-                self.buffer.0[row][col].write(Self::encode_char(' ', self.color_code));
-            }
-        }
-    }
-
-    pub fn write_byte(&mut self, byte: u8) {
-        match byte {
-            b'\n' => self.new_line(),
-            _ => {
-                if self.current_col >= BUFFER_WIDTH {
-                    self.new_line();
-                }
-
-                self.buffer.0[self.current_row][self.current_col].write(Self::encode_char(byte as char, self.color_code));
-            }
-        }
-    }
-
-    pub fn write_string(&mut self, s: &str) {
-        for byte in s.bytes() {
-            match byte {
-                // printable ASCII byte or newline
-                0x20..=0x7e | b'\n' => self.write_byte(byte),
-                // not part of ASCII char set
-                _ => self.write_byte(0xfe),
-            }
-        }
-    }
-
-    fn encode_char(c: char, color_code: u8) -> u16 {
-        (color_code as u16) << 8 | (c as u16)
-    }
-
-    fn new_line(&mut self) {
-        self.current_row += 1;
-        self.current_col = 0;
-
-        if self.current_row >= BUFFER_HEIGHT {
-            self.scroll_up();
-            self.current_row = BUFFER_HEIGHT - 1;
-        }
-    }
-
-    fn scroll_up(&mut self) {
-        for row in 1..BUFFER_HEIGHT {
-            for col in 0..BUFFER_WIDTH {
-                let char = self.buffer.0[row][col].read();
-                self.buffer.0[row - 1][col].write(char);
-            }
-        }
-
-        for col in 0..BUFFER_WIDTH {
-            self.buffer.0[BUFFER_HEIGHT - 1][col].write(Self::encode_char(' ', self.color_code));
-        }
-    }
-}
-
-#[derive(Copy, Clone, Debug)]
 #[repr(u8)]
+#[derive(Copy, Clone)]
 pub enum Color {
-    Black = 0,
-    Blue = 1,
-    Green = 2,
-    Cyan = 3,
-    Red = 4,
-    Magenta = 5,
-    Brown = 6,
-    LightGray = 7,
-    DarkGray = 8,
-    LightBlue = 9,
-    LightGreen = 10,
-    LightCyan = 11,
-    LightRed = 12,
-    Pink = 13,
-    Yellow = 14,
-    White = 15,
+    Black = 0x0,
+    Blue = 0x1,
+    Green = 0x2,
+    Cyan = 0x3,
+    Red = 0x4,
+    Magenta = 0x5,
+    Brown = 0x6,
+    LightGray = 0x7,
+    DarkGray = 0x8,
+    LightBlue = 0x9,
+    LightGreen = 0xA,
+    LightCyan = 0xB,
+    LightRed = 0xC,
+    Pink = 0xD,
+    Yellow = 0xE,
+    White = 0xF,
 }
 
-struct Volatile<T> {
-    value: T,
+/// Clears the screen by writing spaces with a default background color.
+pub unsafe fn clear_screen(bg: Color) {
+    let space: u16 = (bg as u16) << 12 | b' ' as u16; // Combine space character and background color
+    let buffer_size = BUF_WIDTH * BUF_HEIGHT;
+
+    // Fill the VGA buffer with spaces and the specified background color
+    let buffer_ptr = VGA_BUFFER as *mut u16; // Cast to u16 pointer for 2 bytes per character
+    for i in 0..buffer_size {
+        ptr::write(buffer_ptr.add(i), space);
+    }
 }
 
-impl<T> Volatile<T> {
-    fn read(&self) -> T {
-        unsafe { core::ptr::read_volatile(&self.value) }
-    }
-
-    fn write(&mut self, value: T) {
-        unsafe { core::ptr::write_volatile(&mut self.value, value); }
-    }
+/// Writes a character to the VGA buffer at the given position with the specified foreground and background colors.
+pub unsafe fn write_char(x: usize, y: usize, c: u8, fg: Color, bg: Color) {
+    let index = 2 * (y * BUF_WIDTH + x);
+    *VGA_BUFFER.add(index) = c; // Character
+    *VGA_BUFFER.add(index + 1) = (bg as u8) << 4 | (fg as u8); // Color attributes
 }

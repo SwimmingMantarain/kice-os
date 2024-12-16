@@ -3,5 +3,5 @@
 version = 4
 
 [[package]]
-name = "Kice-OS"
+name = "kice-os"
 version = "0.1.0"
