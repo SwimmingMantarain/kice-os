@@ -15,7 +15,7 @@ use vga::*;
 pub extern fn kmain() -> ! {
     unsafe {
         clear_screen(Color::Green);
-        write_str(0, 0, "Test\n", Color::Black, Color::Green);
+        write_str("Test\nTesting\nTested", Color::Black, Color::Green);
 
     }
     loop { }
