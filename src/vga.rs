@@ -47,3 +47,11 @@ pub unsafe fn write_char(x: usize, y: usize, c: u8, fg: Color, bg: Color) {
     *VGA_BUFFER.add(index) = c; // Character
     *VGA_BUFFER.add(index + 1) = (bg as u8) << 4 | (fg as u8); // Color attributes
 }
+
+
+/// Writes a string starting at the given position.
+pub unsafe fn write_str(x: usize, y: usize, string: &str, fg: Color, bg: Color) {
+    for (i, c) in string.chars().enumerate() {
+        write_char(x + i, y, c as u8, fg, bg);
+    }
+}
