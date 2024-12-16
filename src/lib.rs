@@ -15,17 +15,16 @@ use vga::*;
 #[no_mangle]
 pub extern fn kmain() -> ! {
     unsafe {
-        clear_screen(Color::Green);
-        println!(Color::Green, Color::Black, "Test!");
+        clear_screen(Color::Black);
     }
+    println!(Color::LightGreen, Color::Black, "Test!");
+    panic!("sdkjfhgfsujkfhskufd");
     loop { }
 }
 
 
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
-    unsafe { 
-       println!(Color::Red, Color::DarkGray, "Panik! -> \n{:#?}", _info);
-    }
+    println!(Color::Green, Color::Black, "Panik! -> \n{:#?}", _info);
     loop {}
 }
