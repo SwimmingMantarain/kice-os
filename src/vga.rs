@@ -31,6 +31,8 @@ pub enum Color {
 
 static mut CURSOR_X: usize = 0;
 static mut CURSOR_Y: usize = 0;
+static mut CURRENT_FG: Color = Color::White;
+static mut CURRENT_BG: Color = Color::Black;
 
 /// Clears the screen by writing spaces with a default background color.
 pub unsafe fn clear_screen(bg: Color) {
@@ -45,6 +47,7 @@ pub unsafe fn clear_screen(bg: Color) {
 
     CURSOR_X = 0;
     CURSOR_Y = 0;
+    CURRENT_BG = bg;
 }
 
 /// Scrolls the screen up by one line.
@@ -100,5 +103,42 @@ pub unsafe fn write_char(c: u8, fg: Color, bg: Color) {
 pub unsafe fn write_str(string: &str, fg: Color, bg: Color) {
     for c in string.chars() {
         write_char(c as u8, fg, bg);
+    }
+}
+
+#[macro_export]
+macro_rules! print {
+    ($fg:expr, $bg:expr, $($arg:tt)*) => {{
+        use core::fmt::Write;
+        let mut writer = crate::VgaWriter::new($fg, $bg);
+        write!(writer, $($arg)*).unwrap();
+    }};
+}
+
+#[macro_export]
+macro_rules! println {
+    ($fg:expr, $bg:expr) => (print!($fg, $bg, "\n"));
+    ($fg:expr, $bg:expr, $($arg:tt)*) => {{
+        print!($fg, $bg, "\n{}", format_args!($($arg)*));
+    }};
+}
+
+pub struct VgaWriter {
+    fg: Color,
+    bg: Color,
+}
+
+impl VgaWriter {
+    pub fn new(fg: Color, bg: Color) -> Self {
+        VgaWriter { fg, bg }
+    }
+}
+
+impl core::fmt::Write for VgaWriter {
+    fn write_str(&mut self, s: &str) -> core::fmt::Result {
+        unsafe {
+            crate::write_str(s, self.fg, self.bg);
+        }
+        Ok(())
     }
 }

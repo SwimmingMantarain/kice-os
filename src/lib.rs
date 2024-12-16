@@ -5,6 +5,7 @@
 use core::panic::PanicInfo;
 
 // Internal Crates
+#[macro_use]
 pub mod vga;
 mod mem;
 
@@ -15,8 +16,7 @@ use vga::*;
 pub extern fn kmain() -> ! {
     unsafe {
         clear_screen(Color::Green);
-        write_str("Test\nTesting\nTested", Color::Black, Color::Green);
-
+        println!(Color::Green, Color::Black, "Test!");
     }
     loop { }
 }
@@ -24,5 +24,8 @@ pub extern fn kmain() -> ! {
 
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
+    unsafe { 
+       println!(Color::Red, Color::DarkGray, "Panik! -> \n{:#?}", _info);
+    }
     loop {}
 }
