@@ -8,6 +8,7 @@ use core::panic::PanicInfo;
 #[macro_use]
 pub mod vga;
 mod mem;
+mod idt;
 
 // Imports
 use vga::*;
