@@ -22,12 +22,8 @@ target/boot.o: src/asm/boot.asm
 	mkdir -p target
 	nasm -f elf64 src/asm/boot.asm -o target/boot.o
 
-target/timer_stub.o: src/asm/timer_stub.asm
-	mkdir -p target
-	nasm -f elf64 src/asm/timer_stub.asm -o target/timer_stub.o
-
-target/kernel.bin: target/multiboot_header.o target/boot.o target/timer_stub.o src/asm/linker.ld cargo
-	ld -n -o target/kernel.bin -T src/asm/linker.ld target/multiboot_header.o target/boot.o target/timer_stub.o target/x86_64-unkown-kiceos-gnu/release/libkice_os.a
+target/kernel.bin: target/multiboot_header.o target/boot.o  src/asm/linker.ld cargo
+	ld -n -o target/kernel.bin -T src/asm/linker.ld target/multiboot_header.o target/boot.o  target/x86_64-unkown-kiceos-gnu/release/libkice_os.a
 
 target/kice-os.iso: target/kernel.bin src/asm/grub.cfg
 	mkdir -p target/isofiles/boot/grub

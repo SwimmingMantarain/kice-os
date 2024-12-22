@@ -29,7 +29,8 @@ pub extern fn kmain() -> ! {
 
     idt::init_idt();
 
-    pic::pic_enable_irq(0); // Timer
+    pic::pic_enable_irq(0); // Enable Timer
+    pic::pic_enable_irq(1); // Enable Keyboard
 
     unsafe { asm!("sti") }
     
