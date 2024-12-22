@@ -1,5 +1,6 @@
 use core::{arch::{asm, naked_asm}, mem::size_of};
 use crate::Color;
+use crate::pic::pic_send_eoi;
 
 #[repr(C, packed)]
 #[derive(Clone, Copy)]
@@ -83,6 +84,7 @@ extern "C" fn double_fault_wrapper() {
 }
 
 /// Breakpoint Exception Handler
+#[no_mangle]
 extern "C" fn breakpoint_handler(stack_frame: &InterruptStackFrame) {
     println!(Color::Green, Color::Black,"BREAKPOINT ->");
     println!(Color::Green, Color::Black,"Stack Frame: {:?}", stack_frame);
@@ -104,8 +106,33 @@ extern "C" fn breakpoint_wrapper() {
     }
 }
 
+/// Keyboard Interrupt Handler
+#[no_mangle]
+extern "C" fn keyboard_interrupt_handler() {
+    println!(Color::Green, Color::Black, "oi");
+    loop {}
+}
 
-// Interrupt Stack Frame (defined by x86_64 crate or custom struct)
+/// Timer Interrupt Handler
+
+static mut TICKS: u64 = 0;
+
+#[no_mangle]
+extern "C" fn timer_handler() {
+    unsafe {
+        TICKS += 1;
+    }
+    // Tell the PIC were done
+    unsafe {
+        pic_send_eoi(0); // Timer -> 0
+    }
+}
+
+extern "C" {
+    fn timer_interrupt_stub();
+}
+
+// Interrupt Stack Frame
 #[repr(C)]
 #[derive(Debug)]
 struct InterruptStackFrame {
@@ -118,8 +145,6 @@ struct InterruptStackFrame {
 
 
 /// Load IDT
-
-
 #[repr(C, packed)]
 struct IdtPointer {
     size: u16,
@@ -138,11 +163,13 @@ unsafe fn load_idt() {
     );
 }
 
-pub fn init_idt() {
+pub unsafe fn init_idt() {
     unsafe {
         IDT.set_handler(0, divide_by_zero_handler);
         IDT.set_handler(8, double_fault_wrapper);
         IDT.set_handler(3, breakpoint_wrapper);
+        IDT.set_handler(32, timer_interrupt_stub);
+        IDT.set_handler(33, keyboard_interrupt_handler);
         load_idt();
     }
 }

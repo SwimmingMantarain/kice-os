@@ -8,6 +8,10 @@ use core::{arch::asm, panic::PanicInfo};
 // Internal Crates
 #[macro_use]
 pub mod vga;
+pub mod keyboard;
+pub mod port;
+pub mod pic;
+pub mod pit;
 mod mem;
 mod idt;
 
@@ -21,11 +25,13 @@ pub extern fn kmain() -> ! {
     }
     println!(Color::LightGreen, Color::Black, "Test!");
 
+    pic::remap_pic();
+
     idt::init_idt();
 
-    unsafe {
-        asm!("int3");
-    }
+    pic::pic_enable_irq(0); // Timer
+
+    unsafe { asm!("sti") }
     
     loop { }
 }
