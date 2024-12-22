@@ -1,5 +1,6 @@
 #![no_std]
 #![no_main]
+#![feature(naked_functions)]
 
 // External Crates
 use core::{arch::asm, panic::PanicInfo};
@@ -21,13 +22,7 @@ pub extern fn kmain() -> ! {
     println!(Color::LightGreen, Color::Black, "Test!");
 
     idt::init_idt();
-
-    let x = 0;
-
-    println!(Color::LightGreen, Color::Black, "This is x: {}", x);
-
-    let y = 1 / x;
-)
+    
     loop { }
 }
 

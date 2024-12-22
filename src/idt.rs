@@ -1,4 +1,4 @@
-use core::{arch::asm, mem::size_of};
+use core::{arch::{asm, naked_asm}, mem::size_of};
 use crate::Color;
 
 #[repr(C, packed)]
@@ -48,12 +48,49 @@ static mut IDT: Idt = Idt::new();
 
 /// Handlers
 
+
+/// Divide by Zero handler
 #[no_mangle]
 extern "C" fn divide_by_zero_handler() {
     // Handle the divide-by-zero exception here
-    println!(Color::Green, Color::Black, "Divide by zero exception!");
+    println!(Color::Green, Color::Black, "Stop with the zeros my man!");
     loop {}
 }
+
+#[no_mangle]
+extern "C" fn double_fault_handler(stack_frame: &InterruptStackFrame, error_code: u64) {
+    println!(Color::Green, Color::Black,"Double Fault Exception!");
+    println!(Color::Green, Color::Black,"Stack Frame: {:?}", stack_frame);
+    println!(Color::Green, Color::Black,"Error Code: {}", error_code);
+    loop {}
+}
+
+#[naked]
+extern "C" fn double_fault_wrapper() {
+    unsafe {
+        naked_asm!(
+            // Push the handler address
+            "lea rdi, [rsp + 0x10]",    // First argument: pointer to InterruptStackFrame
+            "mov rsi, [rsp + 0x18]",    // Second argument: error code
+            "call {handler}",           // Call the handler
+            handler = sym double_fault_handler,
+            options(),
+        );
+    }
+}
+
+
+// Interrupt Stack Frame (defined by x86_64 crate or custom struct)
+#[repr(C)]
+#[derive(Debug)]
+struct InterruptStackFrame {
+    instruction_pointer: u64,
+    code_segment: u64,
+    cpu_flags: u64,
+    stack_pointer: u64,
+    stack_segment: u64,
+}
+
 
 /// Load IDT
 
@@ -79,6 +116,7 @@ unsafe fn load_idt() {
 pub fn init_idt() {
     unsafe {
         IDT.set_handler(0, divide_by_zero_handler);
+        IDT.set_handler(8, double_fault_wrapper);
         load_idt();
     }
 }
