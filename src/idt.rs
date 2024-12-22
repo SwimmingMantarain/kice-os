@@ -57,14 +57,17 @@ extern "C" fn divide_by_zero_handler() {
     loop {}
 }
 
+
+/// Double Fault Handler
 #[no_mangle]
 extern "C" fn double_fault_handler(stack_frame: &InterruptStackFrame, error_code: u64) {
-    println!(Color::Green, Color::Black,"Double Fault Exception!");
+    println!(Color::Green, Color::Black,"Double Fault Exception! ->");
     println!(Color::Green, Color::Black,"Stack Frame: {:?}", stack_frame);
     println!(Color::Green, Color::Black,"Error Code: {}", error_code);
     loop {}
 }
 
+/// Wrapper for the double faults handler
 #[naked]
 extern "C" fn double_fault_wrapper() {
     unsafe {
@@ -74,6 +77,28 @@ extern "C" fn double_fault_wrapper() {
             "mov rsi, [rsp + 0x18]",    // Second argument: error code
             "call {handler}",           // Call the handler
             handler = sym double_fault_handler,
+            options(),
+        );
+    }
+}
+
+/// Breakpoint Exception Handler
+extern "C" fn breakpoint_handler(stack_frame: &InterruptStackFrame) {
+    println!(Color::Green, Color::Black,"BREAKPOINT ->");
+    println!(Color::Green, Color::Black,"Stack Frame: {:?}", stack_frame);
+    loop {}
+}
+
+/// Wrapper for the above function 
+#[naked]
+extern "C" fn breakpoint_wrapper() {
+    unsafe {
+        naked_asm!(
+            // Push the handler address
+            "lea rdi, [rsp + 0x10]",    // First argument: pointer to InterruptStackFrame
+            "mov rsi, [rsp + 0x18]",    // Second argument: error code
+            "call {handler}",           // Call the handler
+            handler = sym breakpoint_handler,
             options(),
         );
     }
@@ -117,6 +142,7 @@ pub fn init_idt() {
     unsafe {
         IDT.set_handler(0, divide_by_zero_handler);
         IDT.set_handler(8, double_fault_wrapper);
+        IDT.set_handler(3, breakpoint_wrapper);
         load_idt();
     }
 }

@@ -22,6 +22,10 @@ pub extern fn kmain() -> ! {
     println!(Color::LightGreen, Color::Black, "Test!");
 
     idt::init_idt();
+
+    unsafe {
+        asm!("int3");
+    }
     
     loop { }
 }
