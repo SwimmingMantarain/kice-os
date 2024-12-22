@@ -2,7 +2,7 @@
 #![no_main]
 
 // External Crates
-use core::panic::PanicInfo;
+use core::{arch::asm, panic::PanicInfo};
 
 // Internal Crates
 #[macro_use]
@@ -19,7 +19,15 @@ pub extern fn kmain() -> ! {
         clear_screen(Color::Black);
     }
     println!(Color::LightGreen, Color::Black, "Test!");
-    panic!("sdkjfhgfsujkfhskufd");
+
+    idt::init_idt();
+
+    let x = 0;
+
+    println!(Color::LightGreen, Color::Black, "This is x: {}", x);
+
+    let y = 1 / x;
+)
     loop { }
 }
 
