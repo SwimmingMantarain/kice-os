@@ -11,3 +11,4 @@ panic = "abort"
 
 
 [dependencies]
+pc-keyboard = "0.8.0"

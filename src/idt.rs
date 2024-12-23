@@ -1,6 +1,7 @@
 use core::{arch::{asm, naked_asm}, mem::size_of};
 use crate::{port::inb, Color};
 use crate::pic::pic_send_eoi;
+use crate::keyboard;
 
 #[repr(C, packed)]
 #[derive(Clone, Copy)]
@@ -111,7 +112,7 @@ extern "C" fn breakpoint_wrapper() {
 extern "C" fn keyboard_handler() {
     let scancode: u8;
     scancode = unsafe { inb(0x60) };
-    println!(Color::Green, Color::Black, "{}", scancode);
+    keyboard::handle_scancode(scancode);
     // Tell the PIC were done
     unsafe {
         pic_send_eoi(1); // Keyboard -> 1
