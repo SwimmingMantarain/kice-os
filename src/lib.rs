@@ -23,14 +23,28 @@ pub extern fn kmain() -> ! {
     unsafe {
         clear_screen(Color::Black);
     }
-    println!(Color::LightGreen, Color::Black, "Test!");
+    print!(Color::Green, Color::Black, "Print Test              ");
+    print!(Color::LightGreen, Color::Black, "[OK]");
 
     pic::remap_pic();
 
+    println!(Color::Green, Color::Black, "Setup PIC               ");
+    print!(Color::LightGreen, Color::Black, "[OK]");
+
     idt::init_idt();
 
+    println!(Color::Green, Color::Black, "Setup IDT               ");
+    print!(Color::LightGreen, Color::Black, "[OK]");
+
     pic::pic_enable_irq(0); // Enable Timer
+
+    println!(Color::Green, Color::Black, "Setup PIT               ");
+    print!(Color::LightGreen, Color::Black, "[OK]");
+
     pic::pic_enable_irq(1); // Enable Keyboard
+
+    println!(Color::Green, Color::Black, "Setup Keyboard          ");
+    print!(Color::LightGreen, Color::Black, "[OK]");
 
     unsafe { asm!("sti") }
     
@@ -40,6 +54,6 @@ pub extern fn kmain() -> ! {
 
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
-    println!(Color::Green, Color::Black, "Panik! -> \n{:#?}", _info);
+    println!(Color::LightGreen, Color::Black, "Panik! -> \n{:#?}", _info);
     loop {}
 }
