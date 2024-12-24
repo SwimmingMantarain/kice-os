@@ -21,14 +21,11 @@ use vga::*;
 use multiboot::*;
 
 #[no_mangle]
-pub extern fn kmain(multiboot_info_addr: u32) -> ! {
-    // Multiboot Info Extraction
-    let multiboot_info = unsafe { &*(multiboot_info_addr as *const MultibootTag ) };
-
-
+pub extern "C" fn kmain(multiboot_info_addr: *const u8) -> ! {
     unsafe {
         clear_screen(Color::Black);
     }
+
     print!(Color::Green, Color::Black, "Print Test              ");
     print!(Color::LightGreen, Color::Black, "[OK]");
 
@@ -57,9 +54,9 @@ pub extern fn kmain(multiboot_info_addr: u32) -> ! {
     println!(Color::Green, Color::Black, "Interrupts Enabled      ");
     print!(Color::LightGreen, Color::Black, "[OK]");
 
-    println!(Color::Green, Color::Black, "{:?}", multiboot_info);
-
-    
+    // Multiboot Info Extraction
+    let multiboot_info = check(multiboot_info_addr);
+    //multiboot::parse_memory_map(multiboot_info);
     
     loop { }
 }
