@@ -57,6 +57,9 @@ start:
     mov ds, ax
     mov es, ax
 
+    ; Set stack pointer
+    mov esp, stack_top
+
     ; jump, actually no: LEAP gracefully and magestically to kmane!
     jmp gdt64.code:kmain
 
@@ -74,6 +77,12 @@ p3_table:
 
 p2_table:
     resb 4096
+
+align 16
+
+stack_bottom:
+    resb 4096
+stack_top:
 
 section .rodata
 gdt64:

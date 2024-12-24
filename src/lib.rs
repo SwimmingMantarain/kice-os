@@ -12,14 +12,20 @@ pub mod keyboard;
 pub mod port;
 pub mod pic;
 pub mod pit;
+mod multiboot;
 mod mem;
 mod idt;
 
 // Imports
 use vga::*;
+use multiboot::*;
 
 #[no_mangle]
-pub extern fn kmain() -> ! {
+pub extern fn kmain(multiboot_info_addr: u32) -> ! {
+    // Multiboot Info Extraction
+    let multiboot_info = unsafe { &*(multiboot_info_addr as *const MultibootTag ) };
+
+
     unsafe {
         clear_screen(Color::Black);
     }
@@ -46,7 +52,14 @@ pub extern fn kmain() -> ! {
     println!(Color::Green, Color::Black, "Setup Keyboard          ");
     print!(Color::LightGreen, Color::Black, "[OK]");
 
-    unsafe { asm!("sti") }
+    unsafe { asm!("sti") } // Enable all interrupts
+
+    println!(Color::Green, Color::Black, "Interrupts Enabled      ");
+    print!(Color::LightGreen, Color::Black, "[OK]");
+
+    println!(Color::Green, Color::Black, "{:?}", multiboot_info);
+
+    
     
     loop { }
 }
