@@ -21,7 +21,7 @@ use vga::*;
 use multiboot::*;
 
 #[no_mangle]
-pub extern "C" fn kmain(multiboot_info_addr: *const u8) -> ! {
+pub extern "C" fn kmain(multiboot_info_addr: u32) -> ! {
     unsafe {
         clear_screen(Color::Black);
     }
@@ -55,8 +55,10 @@ pub extern "C" fn kmain(multiboot_info_addr: *const u8) -> ! {
     print!(Color::LightGreen, Color::Black, "[OK]");
 
     // Multiboot Info Extraction
-    let multiboot_info = check(multiboot_info_addr);
+    //let multiboot_info = check(multiboot_info_addr);
     //multiboot::parse_memory_map(multiboot_info);
+
+    println!(Color::Green, Color::Black, "{}", multiboot_info_addr);
     
     loop { }
 }

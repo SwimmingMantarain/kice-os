@@ -4,6 +4,13 @@ extern kmain
 section .text
 bits 32
 start:
+    ; Set stack pointer
+    mov esp, stack_top
+
+    ; Push multiboot structure pointer
+    push ebx
+    push eax
+
     ; Point the first entry of the level 4 page table to the first entry in the
     ; p3 table
     mov eax, p3_table
@@ -57,18 +64,8 @@ start:
     mov ds, ax
     mov es, ax
 
-    ; Set stack pointer
-    mov esp, stack_top
-
-    ; Save multiboot structure pointer
-    ;mov [multiboot_ptr], ebx
-    mov eax, ebx
-    push eax
-
     ; jump, actually no: LEAP gracefully and magestically to kmane!
     jmp gdt64.code:kmain
-
-
 
 section .bss
 
@@ -84,13 +81,10 @@ p2_table:
     resb 4096
 
 align 16
-
 stack_bottom:
     resb 4096 ; Reserve 4KB for the stack
+align 16
 stack_top:
-
-multiboot_ptr:
-    resq 1
 
 section .rodata
 gdt64:
