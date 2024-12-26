@@ -26,6 +26,8 @@ pub extern "C" fn kmain(multiboot_info_addr: u32) -> ! {
         clear_screen(Color::Black);
     }
 
+    hlt_loop();
+
     print!(Color::Green, Color::Black, "Print Test              ");
     print!(Color::LightGreen, Color::Black, "[OK]");
 
@@ -60,7 +62,11 @@ pub extern "C" fn kmain(multiboot_info_addr: u32) -> ! {
 
     println!(Color::Green, Color::Black, "{}", multiboot_info_addr);
     
-    loop { }
+    loop { 
+        unsafe {
+            asm!("hlt");
+        }
+    }
 }
 
 
@@ -68,4 +74,13 @@ pub extern "C" fn kmain(multiboot_info_addr: u32) -> ! {
 fn panic(_info: &PanicInfo) -> ! {
     println!(Color::LightGreen, Color::Black, "Panik! -> \n{:#?}", _info);
     loop {}
+}
+
+/// Halt loop for debugging
+fn hlt_loop() {
+    loop {
+        unsafe {
+            asm!("hlt");
+        }
+    }
 }

@@ -7,10 +7,6 @@ start:
     ; Set stack pointer
     mov esp, stack_top
 
-    ; Push multiboot structure pointer
-    push ebx
-    push eax
-
     ; Point the first entry of the level 4 page table to the first entry in the
     ; p3 table
     mov eax, p3_table
