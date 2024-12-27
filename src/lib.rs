@@ -2,7 +2,6 @@
 #![no_main]
 #![feature(naked_functions)]
 #![feature(alloc_error_handler)]
-#![feature(const_mut_refs)]
 
 // External Crates
 use core::{arch::asm, panic::PanicInfo};
@@ -16,11 +15,11 @@ pub mod port;
 pub mod pic;
 pub mod pit;
 mod multiboot;
-mod mem;
 mod idt;
 mod config;
 mod allocator;
 
+use alloc::{boxed::Box, string::String};
 // Imports
 use vga::*;
 
@@ -72,7 +71,20 @@ pub extern "C" fn kmain(multiboot2_magic: u32, multiboot2_info_ptr: u32) -> ! {
 
     println!(Color::Green, Color::Black, "Interrupts Enabled      ");
     print!(Color::LightGreen, Color::Black, "[OK]");
-    
+
+    unsafe { allocator::ALLOCATOR.lock().init(0x_1000_0000, 1024 * 1024) };
+
+    println!(Color::Green, Color::Black, "Setup Allocator         ");
+    print!(Color::LightGreen, Color::Black, "[OK]");
+
+    // Simple allocation test with a box
+    let boxed_number = Box::new(42);
+    println!(Color::Green, Color::Black, "Box Allocation: {}", *boxed_number);
+
+    // Demonstrate multiple allocations
+    let boxed_string = Box::new(String::from("Heap Allocation Test"));
+    println!(Color::Green, Color::Black, "Box String: {}", boxed_string);
+
     loop { 
         unsafe {
             asm!("hlt");
@@ -84,11 +96,11 @@ pub extern "C" fn kmain(multiboot2_magic: u32, multiboot2_info_ptr: u32) -> ! {
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
     println!(Color::LightGreen, Color::Black, "Panik! -> \n{:#?}", _info);
-    loop {}
+    hlt_loop()
 }
 
 /// Halt loop for debugging
-fn hlt_loop() {
+fn hlt_loop() -> ! {
     loop {
         unsafe {
             asm!("hlt");
