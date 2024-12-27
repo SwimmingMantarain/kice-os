@@ -1,5 +1,5 @@
 [unstable]
-build-std = ["core"]
+build-std = ["core", "compiler_builtins", "alloc"]
 
 [build]
-target = "x86_64-unkown-kiceos-gnu.json"
+target = "x86_64-unknown-kiceos-gnu.json"

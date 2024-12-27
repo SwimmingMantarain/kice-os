@@ -7,6 +7,10 @@ start:
     ; Set stack pointer
     mov esp, stack_top
 
+    ; save the multiboot info passed by grub
+    mov dword [mbi_ptr], ebx
+    mov dword [magic], eax  ; Save multiboot magic value
+
     ; Point the first entry of the level 4 page table to the first entry in the
     ; p3 table
     mov eax, p3_table
@@ -47,8 +51,7 @@ start:
 
     ; enable paging
     mov eax, cr0
-    or eax, 1 << 31
-    or eax, 1 << 16
+    or eax, 0x80000001
     mov cr0, eax
 
     ; load the GDT
@@ -61,7 +64,18 @@ start:
     mov es, ax
 
     ; jump, actually no: LEAP gracefully and magestically to kmane!
-    jmp gdt64.code:kmain
+    jmp supa_jmp
+
+supa_jmp:
+    jmp gdt64.code:long_mode_start
+
+section .text
+bits 64
+long_mode_start:
+    ; Pass parameters according to System V AMD64 ABI
+    mov edi, [magic]      ; First parameter in rdi (magic numba)
+    mov rsi, [mbi_ptr]    ; Second parameter in rsi (info pointer)
+    jmp kmain
 
 section .bss
 
@@ -82,13 +96,18 @@ stack_bottom:
 align 16
 stack_top:
 
+mbi_ptr:
+    resq 1
+magic:
+    resq 1
+
 section .rodata
 gdt64:
     dq 0
 .code: equ $ - gdt64
-    dq (1<<44) | (1<<47) | (1<<41) | (1<<43) | (1<<53)
+    dq (1 << 44) | (1 << 47) | (1 << 41) | (1 << 43) | (1 << 53)
 .data: equ $ - gdt64
-    dq (1<<44) | (1<<47) | (1<<41)
+    dq (1 << 44) | (1 << 47) | (1 << 41)
 .pointer:
     dw .pointer - gdt64 - 1
     dq gdt64

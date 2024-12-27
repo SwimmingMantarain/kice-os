@@ -1,9 +1,12 @@
 #![no_std]
 #![no_main]
 #![feature(naked_functions)]
+#![feature(alloc_error_handler)]
+#![feature(const_mut_refs)]
 
 // External Crates
 use core::{arch::asm, panic::PanicInfo};
+extern crate alloc;
 
 // Internal Crates
 #[macro_use]
@@ -15,20 +18,34 @@ pub mod pit;
 mod multiboot;
 mod mem;
 mod idt;
+mod config;
+mod allocator;
 
 // Imports
 use vga::*;
-use multiboot::*;
 
 #[no_mangle]
-pub extern "C" fn kmain(multiboot_info_addr: u32) -> ! {
+pub extern "C" fn kmain(multiboot2_magic: u32, multiboot2_info_ptr: u32) -> ! {
     unsafe {
         clear_screen(Color::Black);
+        config::DEBUG_OUTPUT = false;  // Set to true to enable debug output
     }
 
-    hlt_loop();
+    // Multiboot Info Extraction
+    if multiboot::check_magic(multiboot2_magic) {
+        multiboot::parse_info(multiboot2_info_ptr);
+        
+        // Initialize allocator with memory from multiboot
+        // TODO: Get actual memory region from multiboot info
+        unsafe {
+            allocator::ALLOCATOR.lock().init(0x_1000_0000, 1024 * 1024); // Example: 1MB at 16MB mark
+        }
+    }
 
-    print!(Color::Green, Color::Black, "Print Test              ");
+    println!(Color::Green, Color::Black, "Multiboot2 Magic:{}", multiboot2_magic);
+    println!(Color::Green, Color::Black, "Multiboot2 Info Ptr:{}", multiboot2_info_ptr);
+
+    println!(Color::Green, Color::Black, "Print Test              ");
     print!(Color::LightGreen, Color::Black, "[OK]");
 
     pic::remap_pic();
@@ -55,12 +72,6 @@ pub extern "C" fn kmain(multiboot_info_addr: u32) -> ! {
 
     println!(Color::Green, Color::Black, "Interrupts Enabled      ");
     print!(Color::LightGreen, Color::Black, "[OK]");
-
-    // Multiboot Info Extraction
-    //let multiboot_info = check(multiboot_info_addr);
-    //multiboot::parse_memory_map(multiboot_info);
-
-    println!(Color::Green, Color::Black, "{}", multiboot_info_addr);
     
     loop { 
         unsafe {
