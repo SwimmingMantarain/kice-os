@@ -3,7 +3,7 @@ pub static mut DEBUG_OUTPUT: bool = false;
 #[macro_export]
 macro_rules! debug_println {
     ($color:expr, $bg:expr, $($arg:tt)*) => ({
-        if unsafe { $crate::config::DEBUG_OUTPUT } {
+        if unsafe { $crate::kernel::config::DEBUG_OUTPUT } {
             $crate::println!($color, $bg, $($arg)*);
         }
     });

@@ -1,7 +1,11 @@
-use core::{arch::{asm, naked_asm}, mem::size_of};
-use crate::{port::inb, Color};
-use crate::pic::pic_send_eoi;
-use crate::keyboard;
+use crate::drivers::input::keyboard;
+use crate::kernel::interrupts::pic::pic_send_eoi;
+use crate::println;
+use crate::{utils::port::inb, Color};
+use core::{
+    arch::{asm, naked_asm},
+    mem::size_of,
+};
 
 #[repr(C, packed)]
 #[derive(Clone, Copy)]
@@ -37,7 +41,7 @@ impl Idt {
         let handler_addr = handler as u64;
         self.entries[vector] = IdtEntry {
             offset_low: handler_addr as u16,
-            selector: 0x08, // Code segment selector
+            selector: 0x08,  // Code segment selector
             options: 0x8E00, // Present, Ring 0, 32-bit interrupt gate
             offset_mid: (handler_addr >> 16) as u16,
             offset_high: (handler_addr >> 32) as u32,
@@ -50,7 +54,6 @@ static mut IDT: Idt = Idt::new();
 
 /// Handlers
 
-
 /// Divide by Zero handler
 #[no_mangle]
 extern "C" fn divide_by_zero_handler() {
@@ -59,13 +62,12 @@ extern "C" fn divide_by_zero_handler() {
     loop {}
 }
 
-
 /// Double Fault Handler
 #[no_mangle]
 extern "C" fn double_fault_handler(stack_frame: &InterruptStackFrame, error_code: u64) {
-    println!(Color::Green, Color::Black,"Double Fault Exception! ->");
-    println!(Color::Green, Color::Black,"Stack Frame: {:?}", stack_frame);
-    println!(Color::Green, Color::Black,"Error Code: {}", error_code);
+    println!(Color::Green, Color::Black, "Double Fault Exception! ->");
+    println!(Color::Green, Color::Black, "Stack Frame: {:?}", stack_frame);
+    println!(Color::Green, Color::Black, "Error Code: {}", error_code);
     loop {}
 }
 
@@ -87,12 +89,12 @@ extern "C" fn double_fault_wrapper() {
 /// Breakpoint Exception Handler
 #[no_mangle]
 extern "C" fn breakpoint_handler(stack_frame: &InterruptStackFrame) {
-    println!(Color::Green, Color::Black,"BREAKPOINT ->");
-    println!(Color::Green, Color::Black,"Stack Frame: {:?}", stack_frame);
+    println!(Color::Green, Color::Black, "BREAKPOINT ->");
+    println!(Color::Green, Color::Black, "Stack Frame: {:?}", stack_frame);
     loop {}
 }
 
-/// Wrapper for the above function 
+/// Wrapper for the above function
 #[naked]
 extern "C" fn breakpoint_wrapper() {
     unsafe {
@@ -122,18 +124,18 @@ extern "C" fn keyboard_handler() {
 pub extern "C" fn keyboard_interrupt_stub() {
     unsafe {
         asm!(
-            "push rbx",    // Save registers
-            "push r12",    // Save registers
-            "push r13",    // Save registers
-            "push r14",    // Save registers
-            "push r15",    // Save registers
-            "call keyboard_handler",    // Call the Rust interrupt handler
-            "pop r15",     // Restore registers
-            "pop r14",     // Restore registers
-            "pop r13",     // Restore registers
-            "pop r12",     // Restore registers
-            "pop rbx",     // Restore registers
-            "iretq",       // Return from interrupt (64-bit mode)
+            "push rbx",              // Save registers
+            "push r12",              // Save registers
+            "push r13",              // Save registers
+            "push r14",              // Save registers
+            "push r15",              // Save registers
+            "call keyboard_handler", // Call the Rust interrupt handler
+            "pop r15",               // Restore registers
+            "pop r14",               // Restore registers
+            "pop r13",               // Restore registers
+            "pop r12",               // Restore registers
+            "pop rbx",               // Restore registers
+            "iretq",                 // Return from interrupt (64-bit mode)
             options(nostack, preserves_flags)
         );
     }
@@ -157,23 +159,22 @@ extern "C" fn timer_handler() {
 pub extern "C" fn timer_interrupt_stub() {
     unsafe {
         asm!(
-            "push rbx",    // Save registers
-            "push r12",    // Save registers
-            "push r13",    // Save registers
-            "push r14",    // Save registers
-            "push r15",    // Save registers
-            "call timer_handler",    // Call the Rust interrupt handler
-            "pop r15",     // Restore registers
-            "pop r14",     // Restore registers
-            "pop r13",     // Restore registers
-            "pop r12",     // Restore registers
-            "pop rbx",     // Restore registers
-            "iretq",       // Return from interrupt (64-bit mode)
+            "push rbx",           // Save registers
+            "push r12",           // Save registers
+            "push r13",           // Save registers
+            "push r14",           // Save registers
+            "push r15",           // Save registers
+            "call timer_handler", // Call the Rust interrupt handler
+            "pop r15",            // Restore registers
+            "pop r14",            // Restore registers
+            "pop r13",            // Restore registers
+            "pop r12",            // Restore registers
+            "pop rbx",            // Restore registers
+            "iretq",              // Return from interrupt (64-bit mode)
             options(nostack, preserves_flags)
         );
     }
 }
-
 
 // Interrupt Stack Frame
 #[repr(C)]
@@ -185,7 +186,6 @@ struct InterruptStackFrame {
     stack_pointer: u64,
     stack_segment: u64,
 }
-
 
 /// Load IDT
 #[repr(C, packed)]
@@ -216,5 +216,3 @@ pub fn init_idt() {
         load_idt();
     }
 }
-
-

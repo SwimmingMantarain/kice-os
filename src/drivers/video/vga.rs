@@ -60,7 +60,10 @@ unsafe fn scroll_screen(bg: Color) {
         for x in 0..BUF_WIDTH {
             let src_index = y * BUF_WIDTH + x;
             let dest_index = (y - 1) * BUF_WIDTH + x;
-            ptr::write(buffer_ptr.add(dest_index), ptr::read(buffer_ptr.add(src_index)));
+            ptr::write(
+                buffer_ptr.add(dest_index),
+                ptr::read(buffer_ptr.add(src_index)),
+            );
         }
     }
 
@@ -119,7 +122,7 @@ macro_rules! print {
 macro_rules! println {
     ($fg:expr, $bg:expr) => (print!($fg, $bg, "\n"));
     ($fg:expr, $bg:expr, $($arg:tt)*) => {{
-        print!($fg, $bg, "\n{}", format_args!($($arg)*));
+        crate::print!($fg, $bg, "\n{}", format_args!($($arg)*));
     }};
 }
 

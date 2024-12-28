@@ -1,4 +1,4 @@
-use crate::port::*;
+use crate::utils::port::*;
 
 /// I/O ports for the PIC
 const MASTER_PIC_CMD: u16 = 0x20;
@@ -14,19 +14,19 @@ pub fn remap_pic() {
         // Start initialization
         outb(MASTER_PIC_CMD, 0x11); // ICW1: Start initialization sequence
         outb(SLAVE_PIC_CMD, 0x11);
-        
+
         // Set offsets
         outb(MASTER_PIC_DATA, 0x20); // ICW2: Master PIC vector offset (32)
-        outb(SLAVE_PIC_DATA, 0x28);  // ICW2: Slave PIC vector offset (40)
-        
+        outb(SLAVE_PIC_DATA, 0x28); // ICW2: Slave PIC vector offset (40)
+
         // Configure cascading
         outb(MASTER_PIC_DATA, 0x04); // ICW3: Master PIC has a slave at IRQ2
-        outb(SLAVE_PIC_DATA, 0x02);  // ICW3: Slave PIC identity
-        
+        outb(SLAVE_PIC_DATA, 0x02); // ICW3: Slave PIC identity
+
         // Set mode
         outb(MASTER_PIC_DATA, 0x01); // ICW4: 8086/88 mode
         outb(SLAVE_PIC_DATA, 0x01);
-        
+
         // Unmask all IRQs (optional; better to mask unused ones)
         outb(MASTER_PIC_DATA, 0x00);
         outb(SLAVE_PIC_DATA, 0x00);
@@ -47,4 +47,3 @@ pub fn pic_enable_irq(irq_num: u8) {
     mask &= !(1 << irq_num);
     unsafe { outb(0x21, mask) }
 }
-

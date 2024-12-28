@@ -3,3 +3,9 @@
 *.bin
 *.elf
 *.o
+.vscode/
+*.log
+debug/
+release/
+**/*.rs.bk
+Cargo.lock

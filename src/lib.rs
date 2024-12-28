@@ -1,68 +1,92 @@
 #![no_std]
 #![no_main]
+#![feature(abi_x86_interrupt)]
 #![feature(naked_functions)]
-#![feature(alloc_error_handler)]
 
 // External Crates
-use core::{arch::asm, panic::PanicInfo};
-extern crate alloc;
 
-// Internal Crates
-#[macro_use]
-pub mod vga;
-pub mod keyboard;
-pub mod port;
-pub mod pic;
-pub mod pit;
-mod multiboot;
-mod idt;
-mod config;
-mod allocator;
+// Kernel modules
+pub mod kernel {
+    pub mod config;
+    pub mod multiboot;
 
-use alloc::{boxed::Box, string::String};
+    pub mod interrupts {
+        pub mod idt;
+        pub mod pic;
+    }
+}
+
+// Device drivers
+pub mod drivers {
+    pub mod input {
+        pub mod keyboard;
+    }
+
+    pub mod video {
+        #[macro_use]
+        pub mod vga;
+    }
+
+    pub mod timer {
+        pub mod pit;
+    }
+}
+
+// Utility modules
+pub mod utils {
+    pub mod port;
+}
+
+use core::arch::asm;
+
 // Imports
-use vga::*;
+use drivers::video::vga::*;
 
+// Kernel entry point
 #[no_mangle]
 pub extern "C" fn kmain(multiboot2_magic: u32, multiboot2_info_ptr: u32) -> ! {
     unsafe {
         clear_screen(Color::Black);
-        config::DEBUG_OUTPUT = false;  // Set to true to enable debug output
+        kernel::config::DEBUG_OUTPUT = false; // Set to true to enable debug output
     }
 
     // Multiboot Info Extraction
-    if multiboot::check_magic(multiboot2_magic) {
-        multiboot::parse_info(multiboot2_info_ptr);
-        
-        // Initialize allocator with memory from multiboot
-        // TODO: Get actual memory region from multiboot info
-        unsafe {
-            allocator::ALLOCATOR.lock().init(0x_1000_0000, 1024 * 1024); // Example: 1MB at 16MB mark
-        }
+    if kernel::multiboot::check_magic(multiboot2_magic) {
+        kernel::multiboot::parse_info(multiboot2_info_ptr);
     }
 
-    println!(Color::Green, Color::Black, "Multiboot2 Magic:{}", multiboot2_magic);
-    println!(Color::Green, Color::Black, "Multiboot2 Info Ptr:{}", multiboot2_info_ptr);
+    println!(
+        Color::Green,
+        Color::Black,
+        "Multiboot2 Magic:{}",
+        multiboot2_magic
+    );
+    println!(
+        Color::Green,
+        Color::Black,
+        "Multiboot2 Info Ptr:{}",
+        multiboot2_info_ptr
+    );
 
     println!(Color::Green, Color::Black, "Print Test              ");
     print!(Color::LightGreen, Color::Black, "[OK]");
 
-    pic::remap_pic();
+    kernel::interrupts::pic::remap_pic();
 
     println!(Color::Green, Color::Black, "Setup PIC               ");
     print!(Color::LightGreen, Color::Black, "[OK]");
 
-    idt::init_idt();
+    kernel::interrupts::idt::init_idt();
 
     println!(Color::Green, Color::Black, "Setup IDT               ");
     print!(Color::LightGreen, Color::Black, "[OK]");
 
-    pic::pic_enable_irq(0); // Enable Timer
+    kernel::interrupts::pic::pic_enable_irq(0); // Enable Timer
 
     println!(Color::Green, Color::Black, "Setup PIT               ");
     print!(Color::LightGreen, Color::Black, "[OK]");
 
-    pic::pic_enable_irq(1); // Enable Keyboard
+    kernel::interrupts::pic::pic_enable_irq(1); // Enable Keyboard
 
     println!(Color::Green, Color::Black, "Setup Keyboard          ");
     print!(Color::LightGreen, Color::Black, "[OK]");
@@ -72,29 +96,15 @@ pub extern "C" fn kmain(multiboot2_magic: u32, multiboot2_info_ptr: u32) -> ! {
     println!(Color::Green, Color::Black, "Interrupts Enabled      ");
     print!(Color::LightGreen, Color::Black, "[OK]");
 
-    unsafe { allocator::ALLOCATOR.lock().init(0x_1000_0000, 1024 * 1024) };
-
-    println!(Color::Green, Color::Black, "Setup Allocator         ");
-    print!(Color::LightGreen, Color::Black, "[OK]");
-
-    // Simple allocation test with a box
-    let boxed_number = Box::new(42);
-    println!(Color::Green, Color::Black, "Box Allocation: {}", *boxed_number);
-
-    // Demonstrate multiple allocations
-    let boxed_string = Box::new(String::from("Heap Allocation Test"));
-    println!(Color::Green, Color::Black, "Box String: {}", boxed_string);
-
-    loop { 
+    loop {
         unsafe {
             asm!("hlt");
         }
     }
 }
 
-
 #[panic_handler]
-fn panic(_info: &PanicInfo) -> ! {
+fn panic(_info: &core::panic::PanicInfo) -> ! {
     println!(Color::LightGreen, Color::Black, "Panik! -> \n{:#?}", _info);
     hlt_loop()
 }

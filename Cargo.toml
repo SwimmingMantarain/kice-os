@@ -2,14 +2,26 @@
 name = "kice-os"
 version = "0.1.0"
 edition = "2021"
+authors = ["Your Name <your.email@example.com>"]
+description = "A custom operating system kernel"
+readme = "README.md"
+license = "MIT"
 
 [lib]
 crate-type = ["staticlib"]
 
+[profile.dev]
+panic = "abort"
+opt-level = 1
+
 [profile.release]
 panic = "abort"
-
+opt-level = 3
+lto = true
+codegen-units = 1
 
 [dependencies]
 pc-keyboard = "0.8.0"
 spin = "0.9.8"
+
+[dev-dependencies]

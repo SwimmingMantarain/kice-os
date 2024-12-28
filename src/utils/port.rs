@@ -1,6 +1,5 @@
 use core::arch::asm;
 
-
 /// Write byte to a specified port
 pub unsafe fn outb(port: u16, value: u8) {
     asm!(
