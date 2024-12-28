@@ -12,7 +12,7 @@ macro_rules! debug_println {
 #[macro_export]
 macro_rules! debug_print {
     ($color:expr, $bg:expr, $($arg:tt)*) => ({
-        if unsafe { $crate::config::DEBUG_OUTPUT } {
+        if unsafe { $crate::kernel::config::DEBUG_OUTPUT } {
             $crate::print!($color, $bg, $($arg)*);
         }
     });
