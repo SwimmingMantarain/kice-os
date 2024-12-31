@@ -10,24 +10,24 @@ pub struct MultibootTagHeader {
 
 #[repr(C)]
 pub struct MultibootTag {
-    typ: u32,
-    size: u32,
+    pub typ: u32,
+    pub size: u32,
 }
 
 #[repr(C)]
 pub struct MemoryMapTag {
-    typ: u32,
-    size: u32,
-    entry_size: u32,
+    pub typ: u32,
+    pub size: u32,
+    pub entry_size: u32,
     entry_version: u32,
 }
 
 #[repr(C)]
 pub struct MemoryMapEntry {
-    base_addr: u64,
-    length: u64,
-    typ: u32,
-    reserved: u32,
+    pub base_addr: u64,
+    pub length: u64,
+    pub typ: u32,
+    pub reserved: u32,
 }
 
 pub fn check_magic(magic: u32) -> bool {
@@ -114,4 +114,40 @@ fn parse_memory_map(tag_ptr: *const MemoryMapTag) {
             type_str
         );
     }
+}
+
+// Function to calculate total available memory
+pub fn calculate_total_available_memory(info_ptr: u32) -> u64 {
+    let mut total_available_memory: u64 = 0;
+
+    // Iterate through memory map entries and sum available memory
+    unsafe {
+        let _header = &*(info_ptr as *const MultibootTagHeader);
+        let mut current = (info_ptr as usize + core::mem::size_of::<MultibootTagHeader>()) 
+            as *const MultibootTag;
+
+        while (*current).typ != 0 {
+            let tag = &*current;
+
+            if tag.typ == 6 {  // Memory Map Tag
+                let memory_tag = current as *const MemoryMapTag;
+                let entries_ptr = (memory_tag as usize + core::mem::size_of::<MemoryMapTag>()) 
+                    as *const MemoryMapEntry;
+                let entry_count = (tag.size - core::mem::size_of::<MemoryMapTag>() as u32) / (*memory_tag).entry_size;
+
+                for i in 0..entry_count {
+                    let entry = &*entries_ptr.add(i as usize);
+                    if entry.typ == 1 {  // Available memory
+                        total_available_memory += entry.length;
+                    }
+                }
+                break;  // We've found and processed the memory map
+            }
+
+            // Move to the next tag, aligned to 8 bytes
+            current = ((current as usize + tag.size as usize + 7) & !7) as *const MultibootTag;
+        }
+    }
+
+    total_available_memory
 }
