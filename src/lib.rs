@@ -56,20 +56,20 @@ pub extern "C" fn kmain(multiboot2_magic: u32, multiboot2_info_ptr: u32) -> ! {
     }
 
     let total_memory = kernel::multiboot::calculate_total_available_memory(multiboot2_info_ptr);
-    println!(
+    debug_println!(
         Color::Green,
         Color::Black,
         "Total Available Memory: {} MB",
         total_memory / (1024 * 1024)
     );
 
-    println!(
+    debug_println!(
         Color::Green,
         Color::Black,
         "Multiboot2 Magic:{}",
         multiboot2_magic
     );
-    println!(
+    debug_println!(
         Color::Green,
         Color::Black,
         "Multiboot2 Info Ptr:{}",
