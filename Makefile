@@ -11,7 +11,7 @@ clean:
 	cargo clean
 
 cargo:
-	cargo build --release
+	cargo build --release -Z build-std=core,alloc
 
 target/multiboot_header.o: src/asm/multiboot_header.asm
 	mkdir -p target

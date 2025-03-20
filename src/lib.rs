@@ -2,19 +2,20 @@
 #![no_main]
 #![feature(abi_x86_interrupt)]
 #![feature(naked_functions)]
-#![feature(alloc_error_handler)]
 
 // External Crates
+extern crate multiboot2;
 
 // Kernel modules
 pub mod kernel {
     pub mod config;
-    pub mod multiboot;
+    pub mod memory;
 
     pub mod interrupts {
         pub mod idt;
         pub mod pic;
     }
+
 }
 
 // Device drivers
@@ -38,10 +39,12 @@ pub mod utils {
     pub mod port;
 }
 
-use core::arch::asm;
+use core::{arch::asm, panic};
 
 // Imports
 use drivers::video::vga::*;
+use multiboot2::{BootInformation, BootInformationHeader};
+
 // Kernel entry point
 #[no_mangle]
 pub extern "C" fn kmain(multiboot2_magic: u32, multiboot2_info_ptr: u32) -> ! {
@@ -49,19 +52,6 @@ pub extern "C" fn kmain(multiboot2_magic: u32, multiboot2_info_ptr: u32) -> ! {
         clear_screen(Color::Black);
         kernel::config::DEBUG_OUTPUT = false; // Enable debug output
     }
-
-    // Multiboot Info Extraction
-    if kernel::multiboot::check_magic(multiboot2_magic) {
-        kernel::multiboot::parse_info(multiboot2_info_ptr);
-    }
-
-    let total_memory = kernel::multiboot::calculate_total_available_memory(multiboot2_info_ptr);
-    debug_println!(
-        Color::Green,
-        Color::Black,
-        "Total Available Memory: {} MB",
-        total_memory / (1024 * 1024)
-    );
 
     debug_println!(
         Color::Green,
@@ -78,6 +68,13 @@ pub extern "C" fn kmain(multiboot2_magic: u32, multiboot2_info_ptr: u32) -> ! {
 
     println!(Color::Green, Color::Black, "Print Test              ");
     print!(Color::LightGreen, Color::Black, "[OK]");
+
+    if multiboot2_magic == multiboot2::MAGIC {
+        let boot_info = unsafe { BootInformation::load(multiboot2_info_ptr as *const BootInformationHeader).unwrap() };
+        let _cmd = boot_info.command_line_tag();
+    } else {
+        panic!("Multiboot2 magic doesn't magic!");
+    }
 
     kernel::interrupts::pic::remap_pic();
 
@@ -104,11 +101,10 @@ pub extern "C" fn kmain(multiboot2_magic: u32, multiboot2_info_ptr: u32) -> ! {
     println!(Color::Green, Color::Black, "Interrupts Enabled      ");
     print!(Color::LightGreen, Color::Black, "[OK]");
 
-    loop {
-        unsafe {
-            asm!("hlt");
-        }
-    }
+    println!(Color::Green, Color::Black, "Setup Paging            ");
+    print!(Color::LightGreen, Color::Black, "[OK]");
+
+    hlt_loop();
 }
 
 #[panic_handler]
