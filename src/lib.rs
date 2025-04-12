@@ -9,7 +9,6 @@ extern crate multiboot2;
 // Kernel modules
 pub mod kernel {
     pub mod config;
-    pub mod memory;
 
     pub mod interrupts {
         pub mod idt;
@@ -99,9 +98,6 @@ pub extern "C" fn kmain(multiboot2_magic: u32, multiboot2_info_ptr: u32) -> ! {
     unsafe { asm!("sti") } // Enable all interrupts
 
     println!(Color::Green, Color::Black, "Interrupts Enabled      ");
-    print!(Color::LightGreen, Color::Black, "[OK]");
-
-    println!(Color::Green, Color::Black, "Setup Paging            ");
     print!(Color::LightGreen, Color::Black, "[OK]");
 
     hlt_loop();
