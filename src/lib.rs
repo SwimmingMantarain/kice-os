@@ -1,12 +1,23 @@
 #![no_std]
 #![no_main]
 
-extern "C" fn kmain() {
-    loop {}
+use core::arch::asm;
+use core::panic::PanicInfo;
+
+#[no_mangle]
+pub extern "C" fn kmain() -> ! {
+    loop {
+        unsafe {
+            asm!("hlt");
+        }
+    }
 }
 
-#[cfg(not(test))]
 #[panic_handler]
-fn panic(info: &core::panic::PanicInfo) -> ! {
-    loop {}
+fn panic(_info: &PanicInfo) -> ! {
+    loop {
+        unsafe {
+            asm!("hlt");
+        }
+    }
 }
