@@ -129,4 +129,3 @@ gdt64:
     dq (1 << 44) | (1 << 47) | (1 << 41)  ; 41: writable, 44: descriptor type, 47: present
 .pointer:
     dw $ - gdt64 - 1  ; Size of the GDT - 1
-    dq gdt64          ; Address of the GDT
