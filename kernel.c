@@ -1,13 +1,11 @@
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void main() {
-    *(char*)0xb8000 = 'Q';
-    return;
+void kmain() {
+    // VGA buffer address
+    volatile unsigned char *video = (volatile unsigned char*)0xB8000;
+    const char *message = "Hello, World!";
+    while (*message) {
+        *video++ = *message++;
+        *video = 0x07; // light grey on black
+    }
+    for (;;) {
+    }
 }
-
-#ifdef __cplusplus
-}
-#endif
